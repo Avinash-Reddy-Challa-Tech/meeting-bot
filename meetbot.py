@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Google Meet Bot - Fixed API Response Version
-Your working code but with proper API response returns
+Google Meet Bot - VM Optimized Version
+Optimized for virtual machine environments with better timeout and input handling
 """
 
 import asyncio
@@ -24,9 +24,9 @@ logger = logging.getLogger(__name__)
 
 # FastAPI app instance
 app = FastAPI(
-    title="Google Meet Bot API - Fixed Response Version",
-    description="Automated Google Meet joining service with proper API responses",
-    version="1.0.2"
+    title="Google Meet Bot API - VM Optimized",
+    description="Automated Google Meet joining service optimized for VMs",
+    version="1.0.4"
 )
 
 # Request model
@@ -34,7 +34,7 @@ class MeetJoinRequest(BaseModel):
     meet_url: HttpUrl
     
     class Config:
-        json_schema_extra = {  # Updated from schema_extra
+        json_schema_extra = {
             "example": {
                 "meet_url": "https://meet.google.com/nqw-stzx-idr"
             }
@@ -46,8 +46,8 @@ class MeetJoinResponse(BaseModel):
     message: str
     timestamp: str
 
-class MacOSGoogleMeetBot:
-    """macOS-compatible Google Meet bot with proper API responses"""
+class VMOptimizedGoogleMeetBot:
+    """VM-optimized Google Meet bot with extended timeouts and better input handling"""
     
     def __init__(self, email=None, password=None):
         self.email = email or 'stormee@techolution.com'
@@ -57,76 +57,73 @@ class MacOSGoogleMeetBot:
             raise ValueError("Email and password are required")
 
     async def join_meet(self, meet_url: str) -> Dict[str, Any]:
-        """Join a Google Meet with authentication and session management - Returns API response"""
+        """Join a Google Meet - VM optimized version"""
         
-        logger.info(f"🚀 Starting Google Meet Bot")
+        logger.info(f"🚀 Starting VM-Optimized Google Meet Bot")
         logger.info(f"📧 Email: {self.email}")
         logger.info(f"🔗 Meet URL: {meet_url}")
         
         async with async_playwright() as p:
             try:
-                # Create persistent context for session persistence
                 context_dir = "./meet_bot_context"
                 
-                # Launch with persistent context and stealth settings
+                # VM-optimized browser launch with additional flags
                 context = await p.chromium.launch_persistent_context(
                     user_data_dir=context_dir,
                     headless=True,
                     args=[
                         '--disable-blink-features=AutomationControlled',
                         '--start-maximized',
-                        '--use-fake-ui-for-media-stream',  # Auto-allow camera/mic
-                        '--use-fake-device-for-media-stream',  # Use fake media devices
+                        '--use-fake-ui-for-media-stream',
+                        '--use-fake-device-for-media-stream',
                         '--disable-dev-shm-usage',
                         '--no-sandbox',
-                        '--disable-setuid-sandbox'
+                        '--disable-setuid-sandbox',
+                        '--disable-gpu',  # Better for VMs
+                        '--disable-software-rasterizer',
+                        '--disable-background-timer-throttling',
+                        '--disable-backgrounding-occluded-windows',
+                        '--disable-renderer-backgrounding',
+                        '--single-process',  # Better for VM resources
+                        '--no-zygote'
                     ],
-                    viewport={'width': 1920, 'height': 1080}
+                    viewport={'width': 1920, 'height': 1080},
+                    slow_mo=100  # Add delay for VM stability
                 )
                 
                 # Add stealth scripts
                 await context.add_init_script("""
-                    // Remove webdriver property
                     Object.defineProperty(navigator, 'webdriver', {
                         get: () => undefined,
                     });
-                    
-                    // Override plugins
                     Object.defineProperty(navigator, 'plugins', {
                         get: () => [1, 2, 3, 4, 5],
                     });
-                    
-                    // Override languages
                     Object.defineProperty(navigator, 'languages', {
                         get: () => ['en-US', 'en'],
                     });
-                    
-                    // Add chrome runtime
-                    window.chrome = {
-                        runtime: {}
-                    };
-                    
-                    // Hide automation indicators
+                    window.chrome = { runtime: {} };
                     delete window.__playwright;
                     delete window.__webdriver_script_fn;
                 """)
                 
-                # Grant camera and microphone permissions
                 await context.grant_permissions(['camera', 'microphone'])
-                
                 page = await context.new_page()
                 
-                # Step 1: Check if already logged in with session validation
-                logger.info("🔐 Checking authentication status...")
-                await page.goto('https://accounts.google.com')
-                await asyncio.sleep(3)
+                # Set longer timeouts for VM
+                page.set_default_timeout(60000)  # 60 seconds
+                page.set_default_navigation_timeout(60000)
                 
-                # Enhanced session validation
+                # Session validation
+                logger.info("🔐 Checking authentication status...")
+                await page.goto('https://accounts.google.com', timeout=60000)
+                await asyncio.sleep(5)  # Extra wait for VM
+                
                 session_valid = await self._validate_session(page)
                 
                 if not session_valid:
                     logger.info("🔑 Session expired or not logged in, attempting authentication...")
-                    login_success = await self._perform_login(page)
+                    login_success = await self._perform_login_vm_optimized(page)
                     
                     if not login_success:
                         logger.error("❌ Authentication failed")
@@ -139,17 +136,15 @@ class MacOSGoogleMeetBot:
                 else:
                     logger.info("✅ Valid session found!")
                 
-                # Step 2: Navigate to Google Meet
+                # Navigate to Google Meet
                 logger.info(f"🎥 Navigating to Meet: {meet_url}")
-                await page.goto(meet_url)
-                await asyncio.sleep(5)
+                await page.goto(meet_url, timeout=60000)
+                await asyncio.sleep(8)  # Extra wait for VM
                 
-                # Step 2.5: Check session again after navigation (tokens might expire during navigation)
+                # Check session again
                 if await self._check_session_expired_on_meet(page):
                     logger.warning("⚠️ Session expired during Meet navigation, re-authenticating...")
-                    
-                    # Go back to login
-                    login_success = await self._handle_expired_session(page)
+                    login_success = await self._handle_expired_session_vm(page)
                     if not login_success:
                         logger.error("❌ Re-authentication failed")
                         await context.close()
@@ -159,21 +154,16 @@ class MacOSGoogleMeetBot:
                             "timestamp": datetime.now().isoformat()
                         }
                     
-                    # Navigate back to meeting
                     logger.info(f"🎥 Re-navigating to Meet: {meet_url}")
-                    await page.goto(meet_url)
-                    await asyncio.sleep(5)
+                    await page.goto(meet_url, timeout=60000)
+                    await asyncio.sleep(8)
                 
-                # Step 3: Handle pre-join screen
-                await self._handle_prejoin_screen(page)
+                # Handle pre-join and join
+                await self._handle_prejoin_screen_vm(page)
+                join_success = await self._join_meeting_vm(page)
                 
-                # Step 4: Join the meeting
-                join_success = await self._join_meeting(page)
-                
-                # Close context after joining (no longer stay in meeting for API)
                 await context.close()
                 
-                # Return proper API response
                 if join_success:
                     logger.info("✅ Successfully joined the meeting!")
                     return {
@@ -191,8 +181,6 @@ class MacOSGoogleMeetBot:
                 
             except Exception as e:
                 logger.error(f"❌ Error: {e}")
-                import traceback
-                traceback.print_exc()
                 try:
                     await context.close()
                 except:
@@ -204,25 +192,21 @@ class MacOSGoogleMeetBot:
                 }
     
     async def _validate_session(self, page):
-        """Enhanced session validation"""
-        
+        """Session validation with VM timeouts"""
         try:
             current_url = page.url
             logger.info(f"📍 Current URL for session validation: {current_url}")
             
-            # Check if we're on a signin page
             if 'signin' in current_url.lower():
                 logger.info("🔄 Currently on signin page - session invalid")
                 return False
             
-            # Check if we're redirected to accounts.google.com (valid session)
             if 'myaccount.google.com' in current_url or ('accounts.google.com' in current_url and 'signin' not in current_url):
                 logger.info("✅ Session appears valid from URL")
                 
-                # Additional validation: try to access a Google service
                 try:
-                    await page.goto('https://myaccount.google.com', timeout=10000)
-                    await asyncio.sleep(2)
+                    await page.goto('https://myaccount.google.com', timeout=30000)
+                    await asyncio.sleep(5)  # Extra wait for VM
                     
                     current_url_after = page.url
                     if 'signin' not in current_url_after.lower():
@@ -236,7 +220,6 @@ class MacOSGoogleMeetBot:
                     logger.warning(f"⚠️ Session validation error: {e}")
                     return False
             
-            # If we're somewhere else, assume session is invalid
             logger.info("❌ Session validation failed - unexpected location")
             return False
             
@@ -244,17 +227,89 @@ class MacOSGoogleMeetBot:
             logger.error(f"❌ Session validation error: {e}")
             return False
     
-    async def _check_session_expired_on_meet(self, page):
-        """Check if session expired when accessing Google Meet"""
+    async def _perform_login_vm_optimized(self, page):
+        """VM-optimized login with better input handling"""
         
         try:
-            await asyncio.sleep(2)  # Wait for page to stabilize
+            logger.info("🔐 Starting VM-optimized login process...")
+            
+            if 'signin' not in page.url:
+                await page.goto('https://accounts.google.com/signin', timeout=30000)
+                await asyncio.sleep(5)
+            
+            # Enter email with VM optimization
+            logger.info("📧 Entering email...")
+            email_input = await page.wait_for_selector('input[type="email"]', timeout=30000)
+            
+            # Clear any existing content
+            await email_input.click()
+            await page.keyboard.press('Control+a')  # Select all
+            await page.keyboard.press('Delete')     # Clear
+            await asyncio.sleep(1)
+            
+            # Use fill instead of typing for better reliability in VM
+            await email_input.fill(self.email)
+            await asyncio.sleep(2)
+            
+            logger.info("✅ Email entered")
+            await page.click('#identifierNext, button:has-text("Next")')
+            await asyncio.sleep(6)  # Extra wait for VM
+            
+            # Enter password with VM optimization
+            logger.info("🔑 Entering password...")
+            password_input = await page.wait_for_selector('input[type="password"], input[name="password"]', timeout=45000)  # Extended timeout
+            
+            # Clear any existing content
+            await password_input.click()
+            await page.keyboard.press('Control+a')
+            await page.keyboard.press('Delete')
+            await asyncio.sleep(1)
+            
+            # Use fill method for better reliability
+            await password_input.fill(self.password)
+            await asyncio.sleep(3)  # Extra wait to ensure password is filled
+            
+            logger.info("✅ Password entered")
+            await page.click('#passwordNext, button:has-text("Next")')
+            await asyncio.sleep(8)  # Extended wait for VM
+            
+            # Check for 2FA with extended timeout
+            current_url = page.url
+            if '2-step' in current_url.lower() or 'verification' in current_url.lower():
+                logger.warning("⚠️ 2FA required - please complete manually...")
+                logger.info("Waiting up to 3 minutes for 2FA completion...")
+                
+                try:
+                    await page.wait_for_url('**/myaccount.google.com**', timeout=180000)  # 3 minutes
+                    logger.info("✅ 2FA completed successfully")
+                except:
+                    logger.error("❌ 2FA timeout")
+                    return False
+            
+            # Verify login success with extended timeout
+            await asyncio.sleep(5)
+            final_url = page.url
+            
+            if 'myaccount.google.com' in final_url or 'signin' not in final_url:
+                logger.info("✅ LOGIN SUCCESSFUL!")
+                return True
+            else:
+                logger.error(f"❌ Login failed - unexpected URL: {final_url}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Login error: {e}")
+            return False
+    
+    async def _check_session_expired_on_meet(self, page):
+        """Check session with VM-appropriate timing"""
+        try:
+            await asyncio.sleep(5)  # Extended wait for VM
             current_url = page.url
             page_content = await page.content()
             
             logger.info(f"📍 Meet page URL: {current_url}")
             
-            # Check for signs of expired session
             session_expired_indicators = [
                 'signin' in current_url.lower(),
                 'login' in current_url.lower(), 
@@ -268,9 +323,7 @@ class MacOSGoogleMeetBot:
                 logger.warning("⚠️ Session appears to have expired on Meet page")
                 return True
                 
-            # Additional check: look for Google Meet interface elements
             try:
-                # If we can find meet-specific elements, session is likely valid
                 meet_elements = await page.query_selector_all(
                     'div[data-meeting-title], button[aria-label*="camera"], button[aria-label*="microphone"], div[jsname]'
                 )
@@ -288,116 +341,37 @@ class MacOSGoogleMeetBot:
                 
         except Exception as e:
             logger.error(f"❌ Error checking session on Meet: {e}")
-            return True  # Assume expired if we can't check
+            return True
     
-    async def _handle_expired_session(self, page):
-        """Handle expired session by performing fresh login"""
-        
+    async def _handle_expired_session_vm(self, page):
+        """Handle expired session - VM optimized"""
         try:
             logger.info("🔄 Handling expired session...")
-            
-            # Navigate to signin page
-            await page.goto('https://accounts.google.com/signin')
-            await asyncio.sleep(3)
-            
-            # Perform fresh login
-            return await self._perform_login(page)
-            
+            await page.goto('https://accounts.google.com/signin', timeout=30000)
+            await asyncio.sleep(5)
+            return await self._perform_login_vm_optimized(page)
         except Exception as e:
             logger.error(f"❌ Error handling expired session: {e}")
             return False
     
-    async def _perform_login(self, page):
-        """Perform Google login"""
-        
-        try:
-            logger.info("🔐 Starting login process...")
-            
-            # Navigate to signin if not already there
-            if 'signin' not in page.url:
-                await page.goto('https://accounts.google.com/signin')
-                await asyncio.sleep(2)
-            
-            # Enter email
-            logger.info("📧 Entering email...")
-            email_input = await page.wait_for_selector('input[type="email"]', timeout=10000)
-            await email_input.click()
-            await asyncio.sleep(0.5)
-            
-            for char in self.email:
-                await page.keyboard.type(char)
-                await asyncio.sleep(0.05)
-            
-            logger.info("✅ Email entered")
-            
-            # Click Next
-            await page.click('#identifierNext, button:has-text("Next")')
-            await asyncio.sleep(3)
-            
-            # Enter password
-            logger.info("🔑 Entering password...")
-            password_input = await page.wait_for_selector('input[type="password"], input[name="password"]', timeout=15000)
-            await password_input.click()
-            await asyncio.sleep(0.5)
-            
-            for char in self.password:
-                await page.keyboard.type(char)
-                await asyncio.sleep(0.03)
-            
-            logger.info("✅ Password entered")
-            
-            # Click Next
-            await page.click('#passwordNext, button:has-text("Next")')
-            await asyncio.sleep(5)
-            
-            # Check for 2FA
-            current_url = page.url
-            if '2-step' in current_url.lower() or 'verification' in current_url.lower():
-                logger.warning("⚠️ 2FA required - please complete manually...")
-                logger.info("Waiting up to 2 minutes for 2FA completion...")
-                
-                try:
-                    await page.wait_for_url('**/myaccount.google.com**', timeout=120000)
-                    logger.info("✅ 2FA completed successfully")
-                except:
-                    logger.error("❌ 2FA timeout")
-                    return False
-            
-            # Verify login success
-            await asyncio.sleep(3)
-            final_url = page.url
-            
-            if 'myaccount.google.com' in final_url or 'signin' not in final_url:
-                logger.info("✅ LOGIN SUCCESSFUL!")
-                return True
-            else:
-                logger.error("❌ Login failed")
-                return False
-                
-        except Exception as e:
-            logger.error(f"❌ Login error: {e}")
-            return False
-    
-    async def _handle_prejoin_screen(self, page):
-        """Handle the Google Meet pre-join screen"""
-        
+    async def _handle_prejoin_screen_vm(self, page):
+        """Handle pre-join screen - VM optimized"""
         logger.info("🎬 Handling pre-join screen...")
         
         try:
-            # Wait for the page to load
-            await asyncio.sleep(3)
+            await asyncio.sleep(6)  # Extended wait for VM
             
             # Turn off camera
             try:
                 camera_button = await page.wait_for_selector(
                     'button[aria-label*="camera" i], button[aria-label*="Turn off camera" i], div[aria-label*="camera" i]',
-                    timeout=5000
+                    timeout=15000  # Extended timeout
                 )
                 camera_state = await camera_button.get_attribute('aria-label')
-                if 'turn off' in camera_state.lower():
+                if camera_state and 'turn off' in camera_state.lower():
                     await camera_button.click()
                     logger.info("📷 Camera turned off")
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(2)
             except Exception as e:
                 logger.debug(f"Camera button not found or already off: {e}")
             
@@ -405,13 +379,13 @@ class MacOSGoogleMeetBot:
             try:
                 mic_button = await page.wait_for_selector(
                     'button[aria-label*="microphone" i], button[aria-label*="Turn off microphone" i], div[aria-label*="microphone" i]',
-                    timeout=5000
+                    timeout=15000  # Extended timeout
                 )
                 mic_state = await mic_button.get_attribute('aria-label')
-                if 'turn off' in mic_state.lower():
+                if mic_state and 'turn off' in mic_state.lower():
                     await mic_button.click()
                     logger.info("🎤 Microphone turned off")
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(2)
             except Exception as e:
                 logger.debug(f"Mic button not found or already off: {e}")
             
@@ -420,13 +394,13 @@ class MacOSGoogleMeetBot:
         except Exception as e:
             logger.warning(f"⚠️ Could not configure pre-join settings: {e}")
     
-    async def _join_meeting(self, page):
-        """Click the join button to enter the meeting"""
-        
+    async def _join_meeting_vm(self, page):
+        """Join meeting - VM optimized"""
         logger.info("🚪 Attempting to join meeting...")
         
         try:
-            # Try different selectors for the join button
+            await asyncio.sleep(5)  # Extended wait for VM
+            
             join_selectors = [
                 'button[aria-label*="Ask to join" i]',
                 'button[aria-label*="Join now" i]',
@@ -441,7 +415,7 @@ class MacOSGoogleMeetBot:
             join_button = None
             for selector in join_selectors:
                 try:
-                    join_button = await page.wait_for_selector(selector, timeout=5000)
+                    join_button = await page.wait_for_selector(selector, timeout=10000)
                     if join_button:
                         logger.info(f"✅ Found join button with selector: {selector}")
                         break
@@ -451,12 +425,8 @@ class MacOSGoogleMeetBot:
             if join_button:
                 await join_button.click()
                 logger.info("🎯 Join button clicked!")
-                await asyncio.sleep(5)
+                await asyncio.sleep(10)  # Extended wait for VM
                 
-                # Check if we're in the meeting
-                await asyncio.sleep(3)
-                
-                # Look for meeting indicators
                 try:
                     meeting_indicators = await page.query_selector_all(
                         'div[aria-label*="meeting" i], div[aria-label*="participants" i]'
@@ -471,11 +441,6 @@ class MacOSGoogleMeetBot:
                 return True
             else:
                 logger.error("❌ Could not find join button")
-                
-                # Debug: Print current page content
-                page_text = await page.evaluate('() => document.body.innerText')
-                logger.debug(f"Page content: {page_text[:500]}")
-                
                 return False
                 
         except Exception as e:
@@ -483,33 +448,21 @@ class MacOSGoogleMeetBot:
             return False
 
 # Global bot instance
-meet_bot = MacOSGoogleMeetBot()
+meet_bot = VMOptimizedGoogleMeetBot()
 
 @app.get("/")
 async def root():
-    """Health check endpoint"""
     return {
-        "message": "Google Meet Bot API - Fixed Response Version",
+        "message": "Google Meet Bot API - VM Optimized",
         "timestamp": datetime.now().isoformat(),
         "status": "healthy",
-        "platform": "macOS-compatible"
+        "version": "1.0.4"
     }
 
 @app.post("/join-meet", response_model=MeetJoinResponse)
 async def join_meet_endpoint(request: MeetJoinRequest):
-    """
-    Join a Google Meet meeting - Now returns proper API responses
-    
-    Args:
-        request: MeetJoinRequest containing the meet_url
-        
-    Returns:
-        MeetJoinResponse with success status and message
-    """
     try:
         logger.info(f"🎯 Received request to join meeting: {request.meet_url}")
-        
-        # Call the bot's join_meet method (now returns proper dict)
         result = await meet_bot.join_meet(str(request.meet_url))
         
         return MeetJoinResponse(
@@ -527,66 +480,16 @@ async def join_meet_endpoint(request: MeetJoinRequest):
 
 @app.get("/health")
 async def health_check():
-    """Extended health check with system info"""
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "service": "Google Meet Bot API - Fixed Response Version",
-        "version": "1.0.2",
+        "service": "Google Meet Bot API - VM Optimized",
+        "version": "1.0.4",
         "email": meet_bot.email,
-        "platform": sys.platform,
-        "python_version": sys.version
+        "platform": sys.platform
     }
 
-@app.get("/test-network")
-async def test_network():
-    """Test network connectivity"""
-    try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context()
-            page = await context.new_page()
-            
-            results = {}
-            
-            # Test basic connectivity
-            try:
-                await page.goto('https://httpbin.org/get', timeout=10000)
-                results['basic_http'] = 'OK'
-            except Exception as e:
-                results['basic_http'] = f'FAILED: {str(e)}'
-            
-            # Test Google connectivity
-            try:
-                await page.goto('https://www.google.com', timeout=10000)
-                results['google'] = 'OK'
-            except Exception as e:
-                results['google'] = f'FAILED: {str(e)}'
-            
-            # Test Google Accounts
-            try:
-                await page.goto('https://accounts.google.com', timeout=10000)
-                results['google_accounts'] = 'OK'
-            except Exception as e:
-                results['google_accounts'] = f'FAILED: {str(e)}'
-            
-            await browser.close()
-            
-            return {
-                "timestamp": datetime.now().isoformat(),
-                "tests": results,
-                "overall": "OK" if all('OK' in v for v in results.values()) else "ISSUES_DETECTED"
-            }
-            
-    except Exception as e:
-        return {
-            "timestamp": datetime.now().isoformat(),
-            "error": str(e),
-            "overall": "FAILED"
-        }
-
 if __name__ == "__main__":
-    # Run the server
     uvicorn.run(
         "meetbot:app",
         host="0.0.0.0",
