@@ -1,3 +1,5 @@
 /meet_bot_context
 .env
 .appmodconfig
+node_modules
+.next
