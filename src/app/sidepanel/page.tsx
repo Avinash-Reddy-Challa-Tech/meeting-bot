@@ -8,7 +8,6 @@ import {
 } from '@googleworkspace/meet-addons/meet.addons';
 
 type RecordingStatus = 'idle' | 'starting' | 'recording' | 'stopping' | 'error';
-
 export default function SidePanelPage() {
   const [sidePanelClient, setSidePanelClient] = useState<MeetSidePanelClient>();
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
